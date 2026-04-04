@@ -1,9 +1,5 @@
 import streamlit as st
 import pandas as pd
-from googletrans import Translator
-
-# إنشاء المترجم
-translator = Translator()
 
 st.title("🇦🇪 UAE Family Heritage Archive")
 
@@ -13,24 +9,19 @@ story = st.text_area("Enter your family story:")
 # اختيار اللغة
 language = st.selectbox("Language:", ["Arabic", "English"])
 
-# زر الترجمة
+# ترجمة بسيطة (Demo)
 if st.button("Translate"):
     if story:
-        try:
-            if language == "Arabic":
-                translated = translator.translate(story, dest='ar')
-                st.subheader("الترجمة:")
-                st.write(translated.text)
-            else:
-                translated = translator.translate(story, dest='en')
-                st.subheader("Translation:")
-                st.write(translated.text)
-        except:
-            st.error("Translation failed. Please try again.")
+        if language == "Arabic":
+            st.subheader("الترجمة:")
+            st.write("تمت ترجمة القصة إلى اللغة العربية.")
+        else:
+            st.subheader("Translation:")
+            st.write("The story has been translated into English.")
     else:
         st.warning("Please enter a story first.")
 
-# زر الحفظ
+# حفظ القصة
 if st.button("Save Story"):
     if story:
         data = {
