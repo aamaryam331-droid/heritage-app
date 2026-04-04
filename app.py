@@ -10,13 +10,20 @@ story = st.text_area("Enter your family story:")
 language = st.selectbox("Language:", ["Arabic", "English"])
 
 # زر الترجمة (عام)
+from googletrans import Translator
+
+translator = Translator()
+
 if st.button("Translate"):
-    if language == "Arabic":
-        st.subheader("الترجمة:")
-        st.write("تمت ترجمة القصة إلى اللغة العربية مع الحفاظ على المعنى والقيم العائلية.")
-    else:
-        st.subheader("Translation:")
-        st.write("The story has been translated into English while preserving its meaning and family values.")
+    if story:
+        if language == "Arabic":
+            translated = translator.translate(story, dest='ar')
+            st.subheader("الترجمة:")
+            st.write(translated.text)
+        else:
+            translated = translator.translate(story, dest='en')
+            st.subheader("Translation:")
+            st.write(translated.text)
 
 # زر الحفظ
 if st.button("Save Story"):
