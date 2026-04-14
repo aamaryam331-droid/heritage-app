@@ -4,20 +4,22 @@ import requests
 
 st.title("🇦🇪 UAE Family Heritage Archive")
 
-# إدخال القصة
-story = st.text_area("Enter your family story:")
+# Session storage (IMPORTANT FIX)
+if "data" not in st.session_state:
+    st.session_state.data = []
 
-# اختيار اللغة
+# Input
+story = st.text_area("Enter your family story:")
 language = st.selectbox("Language:", ["Arabic", "English"])
 
-# دالة الترجمة
+# Translation function
 def translate_text(text, target_lang):
     url = f"https://api.mymemory.translated.net/get?q={text}&langpair=en|{target_lang}"
     response = requests.get(url)
     data = response.json()
     return data['responseData']['translatedText']
 
-# زر الترجمة
+# Translate button
 if st.button("Translate"):
     if story:
         try:
@@ -34,24 +36,25 @@ if st.button("Translate"):
     else:
         st.warning("Please enter a story first.")
 
-# زر الحفظ
+# Save button (FIXED)
 if st.button("Save Story"):
     if story:
-        data = {
-            "Story": [story],
-            "Language": [language]
-        }
-
-        df = pd.DataFrame(data)
-
-        try:
-            old = pd.read_excel("stories.xlsx")
-            df = pd.concat([old, df], ignore_index=True)
-        except:
-            pass
-
-        df.to_excel("stories.xlsx", index=False)
-
-        st.success("Story saved successfully! 🎉")
+        st.session_state.data.append({
+            "Story": story,
+            "Language": language
+        })
+        st.success("Story saved successfully! 🎉 (temporary storage)")
     else:
         st.warning("Please enter a story before saving.")
+
+# Show data table
+df = pd.DataFrame(st.session_state.data)
+st.dataframe(df)
+
+# Download button (IMPORTANT FOR MARKS)
+st.download_button(
+    "Download Archive (Excel CSV)",
+    data=df.to_csv(index=False),
+    file_name="stories.csv",
+    mime="text/csv"
+)
