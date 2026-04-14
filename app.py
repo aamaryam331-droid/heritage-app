@@ -4,7 +4,7 @@ import requests
 
 st.title("🇦🇪 UAE Family Heritage Archive")
 
-# Session storage (IMPORTANT FIX)
+# Session storage
 if "data" not in st.session_state:
     st.session_state.data = []
 
@@ -12,11 +12,14 @@ if "data" not in st.session_state:
 story = st.text_area("Enter your family story:")
 language = st.selectbox("Language:", ["Arabic", "English"])
 
-# Translation function
+# Translation function (FIXED LIMIT)
 def translate_text(text, target_lang):
+    text = text[:450]  # FIX: MyMemory limit (500 chars)
+
     url = f"https://api.mymemory.translated.net/get?q={text}&langpair=en|{target_lang}"
     response = requests.get(url)
     data = response.json()
+
     return data['responseData']['translatedText']
 
 # Translate button
@@ -36,24 +39,24 @@ if st.button("Translate"):
     else:
         st.warning("Please enter a story first.")
 
-# Save button (FIXED)
+# Save button
 if st.button("Save Story"):
     if story:
         st.session_state.data.append({
             "Story": story,
             "Language": language
         })
-        st.success("Story saved successfully! 🎉 (temporary storage)")
+        st.success("Story saved successfully! 🎉")
     else:
         st.warning("Please enter a story before saving.")
 
-# Show data table
+# Show data
 df = pd.DataFrame(st.session_state.data)
 st.dataframe(df)
 
-# Download button (IMPORTANT FOR MARKS)
+# Download CSV (Excel alternative)
 st.download_button(
-    "Download Archive (Excel CSV)",
+    "Download Archive (CSV)",
     data=df.to_csv(index=False),
     file_name="stories.csv",
     mime="text/csv"
