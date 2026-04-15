@@ -2,62 +2,92 @@ import streamlit as st
 import pandas as pd
 import requests
 
-st.title("🇦🇪 UAE Family Heritage Archive")
+st.title("🇦🇪 UAE Family Heritage AI Archivist")
 
-# Session storage
+# ----------------------------
+# SESSION STORAGE
+# ----------------------------
 if "data" not in st.session_state:
     st.session_state.data = []
 
-# Input
-story = st.text_area("Enter your family story:")
-language = st.selectbox("Language:", ["Arabic", "English"])
+# ----------------------------
+# INPUTS
+# ----------------------------
+story = st.text_area("Enter Family Story (Arabic or English):")
 
-# Translation function (FIXED LIMIT)
-def translate_text(text, target_lang):
-    text = text[:450]  # FIX: MyMemory limit (500 chars)
+language = st.selectbox("Select Language:", ["English", "Arabic"])
 
-    url = f"https://api.mymemory.translated.net/get?q={text}&langpair=en|{target_lang}"
+values = st.multiselect(
+    "Select UAE Values",
+    ["Respect", "Unity", "Responsibility", "Hard Work", "Compassion"]
+)
+
+# ----------------------------
+# AI SIMULATION FUNCTION
+# ----------------------------
+def process_story(text):
+    return "AI Processed Story: " + text
+
+# ----------------------------
+# TRANSLATION FUNCTION
+# ----------------------------
+def translate_text(text):
+    text = text[:450]  # API limit fix
+    url = f"https://api.mymemory.translated.net/get?q={text}&langpair=en|ar"
     response = requests.get(url)
     data = response.json()
+    return data["responseData"]["translatedText"]
 
-    return data['responseData']['translatedText']
+# ----------------------------
+# MAIN BUTTON
+# ----------------------------
+if st.button("Submit Story"):
 
-# Translate button
-if st.button("Translate"):
     if story:
+
+        ai_story = process_story(story)
+
         try:
-            if language == "Arabic":
-                translated = translate_text(story, "ar")
-                st.subheader("الترجمة:")
-                st.write(translated)
-            else:
-                translated = translate_text(story, "en")
-                st.subheader("Translation:")
-                st.write(translated)
+            translated = translate_text(story)
         except:
-            st.error("Translation failed.")
-    else:
-        st.warning("Please enter a story first.")
+            translated = "Translation failed"
 
-# Save button
-if st.button("Save Story"):
-    if story:
+        st.write("### Original Story")
+        st.write(story)
+
+        st.write("### AI Processed Story")
+        st.write(ai_story)
+
+        st.write("### Translated Story")
+        st.write(translated)
+
+        # SAVE DATA
         st.session_state.data.append({
             "Story": story,
-            "Language": language
+            "AI Story": ai_story,
+            "Translation": translated,
+            "Language": language,
+            "Values": ", ".join(values)
         })
-        st.success("Story saved successfully! 🎉")
-    else:
-        st.warning("Please enter a story before saving.")
 
-# Show data
+        st.success("Story saved successfully!")
+
+    else:
+        st.warning("Please enter a story")
+
+# ----------------------------
+# DISPLAY DATA
+# ----------------------------
+st.write("## Stored Stories")
 df = pd.DataFrame(st.session_state.data)
 st.dataframe(df)
 
-# Download CSV (Excel alternative)
+# ----------------------------
+# DOWNLOAD FILE
+# ----------------------------
 st.download_button(
-    "Download Archive (CSV)",
+    "Download CSV File",
     data=df.to_csv(index=False),
-    file_name="stories.csv",
+    file_name="heritage_data.csv",
     mime="text/csv"
 )
