@@ -27,14 +27,14 @@ def process_story(text):
 # TRANSLATION FUNCTION
 # ----------------------------
 def translate_text(text):
-    text = text[:450]  # API limit fix
+    text = text[:450]
     url = f"https://api.mymemory.translated.net/get?q={text}&langpair=en|ar"
     response = requests.get(url)
     data = response.json()
     return data["responseData"]["translatedText"]
 
 # ----------------------------
-# FILE PATH (REAL STORAGE)
+# FILE PATH
 # ----------------------------
 file_path = "heritage_data.csv"
 
@@ -54,7 +54,7 @@ if st.button("Submit Story"):
         except:
             translated = "Translation failed"
 
-        # show outputs
+        # show results
         st.write("### Original Story")
         st.write(story)
 
@@ -65,7 +65,7 @@ if st.button("Submit Story"):
         st.write(translated)
 
         # ----------------------------
-        # SAVE TO CSV (FIXED PART)
+        # SAVE TO CSV (FIXED UTF-8)
         # ----------------------------
         new_data = pd.DataFrame([{
             "Story": story,
@@ -76,9 +76,19 @@ if st.button("Submit Story"):
         }])
 
         if os.path.exists(file_path):
-            new_data.to_csv(file_path, mode="a", header=False, index=False)
+            new_data.to_csv(
+                file_path,
+                mode="a",
+                header=False,
+                index=False,
+                encoding="utf-8-sig"
+            )
         else:
-            new_data.to_csv(file_path, index=False)
+            new_data.to_csv(
+                file_path,
+                index=False,
+                encoding="utf-8-sig"
+            )
 
         st.success("Story saved successfully!")
 
@@ -86,12 +96,12 @@ if st.button("Submit Story"):
         st.warning("Please enter a story")
 
 # ----------------------------
-# DISPLAY STORED DATA
+# DISPLAY DATA
 # ----------------------------
 st.write("## Stored Stories")
 
 if os.path.exists(file_path):
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, encoding="utf-8-sig")
     st.dataframe(df)
 else:
     st.info("No stories saved yet.")
@@ -100,7 +110,7 @@ else:
 # DOWNLOAD BUTTON
 # ----------------------------
 if os.path.exists(file_path):
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, encoding="utf-8-sig")
 
     st.download_button(
         "Download CSV File",
