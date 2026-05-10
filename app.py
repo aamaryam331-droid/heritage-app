@@ -1,14 +1,9 @@
 import streamlit as st
 import pandas as pd
 import requests
+import os
 
 st.title("🇦🇪 UAE Family Heritage AI Archivist")
-
-# ----------------------------
-# SESSION STORAGE
-# ----------------------------
-if "data" not in st.session_state:
-    st.session_state.data = []
 
 # ----------------------------
 # INPUTS
@@ -39,19 +34,27 @@ def translate_text(text):
     return data["responseData"]["translatedText"]
 
 # ----------------------------
+# FILE PATH (REAL STORAGE)
+# ----------------------------
+file_path = "heritage_data.csv"
+
+# ----------------------------
 # MAIN BUTTON
 # ----------------------------
 if st.button("Submit Story"):
 
     if story:
 
+        # AI processing
         ai_story = process_story(story)
 
+        # translation
         try:
             translated = translate_text(story)
         except:
             translated = "Translation failed"
 
+        # show outputs
         st.write("### Original Story")
         st.write(story)
 
@@ -61,14 +64,21 @@ if st.button("Submit Story"):
         st.write("### Translated Story")
         st.write(translated)
 
-        # SAVE DATA
-        st.session_state.data.append({
+        # ----------------------------
+        # SAVE TO CSV (FIXED PART)
+        # ----------------------------
+        new_data = pd.DataFrame([{
             "Story": story,
             "AI Story": ai_story,
             "Translation": translated,
             "Language": language,
             "Values": ", ".join(values)
-        })
+        }])
+
+        if os.path.exists(file_path):
+            new_data.to_csv(file_path, mode="a", header=False, index=False)
+        else:
+            new_data.to_csv(file_path, index=False)
 
         st.success("Story saved successfully!")
 
@@ -76,18 +86,25 @@ if st.button("Submit Story"):
         st.warning("Please enter a story")
 
 # ----------------------------
-# DISPLAY DATA
+# DISPLAY STORED DATA
 # ----------------------------
 st.write("## Stored Stories")
-df = pd.DataFrame(st.session_state.data)
-st.dataframe(df)
+
+if os.path.exists(file_path):
+    df = pd.read_csv(file_path)
+    st.dataframe(df)
+else:
+    st.info("No stories saved yet.")
 
 # ----------------------------
-# DOWNLOAD FILE
+# DOWNLOAD BUTTON
 # ----------------------------
-st.download_button(
-    "Download CSV File",
-    data=df.to_csv(index=False),
-    file_name="heritage_data.csv",
-    mime="text/csv"
-)
+if os.path.exists(file_path):
+    df = pd.read_csv(file_path)
+
+    st.download_button(
+        "Download CSV File",
+        data=df.to_csv(index=False),
+        file_name="heritage_data.csv",
+        mime="text/csv"
+    )
