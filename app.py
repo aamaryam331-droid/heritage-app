@@ -6,11 +6,30 @@ import os
 st.title("🇦🇪 UAE Family Heritage AI Archivist")
 
 # ----------------------------
+# FILE SETUP
+# ----------------------------
+FILE_NAME = "heritage_data.csv"
+
+# Create file if it doesn't exist
+if not os.path.exists(FILE_NAME):
+    df = pd.DataFrame(columns=[
+        "Story",
+        "AI Story",
+        "Translation",
+        "Language",
+        "Values"
+    ])
+    df.to_csv(FILE_NAME, index=False, encoding="utf-8-sig")
+
+# ----------------------------
 # INPUTS
 # ----------------------------
-story = st.text_area("Enter Family Story (Arabic or English):")
+story = st.text_area("Enter Family Story")
 
-language = st.selectbox("Select Language:", ["English", "Arabic"])
+language = st.selectbox(
+    "Select Language",
+    ["Arabic", "English"]
+)
 
 values = st.multiselect(
     "Select UAE Values",
@@ -18,43 +37,47 @@ values = st.multiselect(
 )
 
 # ----------------------------
-# AI SIMULATION FUNCTION
+# AI PROCESSING
 # ----------------------------
 def process_story(text):
     return "AI Processed Story: " + text
 
 # ----------------------------
-# TRANSLATION FUNCTION
+# TRANSLATION
 # ----------------------------
-def translate_text(text):
+def translate_text(text, language):
+
     text = text[:450]
-    url = f"https://api.mymemory.translated.net/get?q={text}&langpair=en|ar"
+
+    # Arabic → English
+    if language == "Arabic":
+        langpair = "ar|en"
+
+    # English → Arabic
+    else:
+        langpair = "en|ar"
+
+    url = f"https://api.mymemory.translated.net/get?q={text}&langpair={langpair}"
+
     response = requests.get(url)
     data = response.json()
+
     return data["responseData"]["translatedText"]
 
 # ----------------------------
-# FILE PATH
-# ----------------------------
-file_path = "heritage_data.csv"
-
-# ----------------------------
-# MAIN BUTTON
+# BUTTON
 # ----------------------------
 if st.button("Submit Story"):
 
     if story:
 
-        # AI processing
         ai_story = process_story(story)
 
-        # translation
         try:
-            translated = translate_text(story)
+            translated = translate_text(story, language)
         except:
             translated = "Translation failed"
 
-        # show results
         st.write("### Original Story")
         st.write(story)
 
@@ -65,7 +88,7 @@ if st.button("Submit Story"):
         st.write(translated)
 
         # ----------------------------
-        # SAVE TO CSV (FIXED UTF-8)
+        # SAVE DATA
         # ----------------------------
         new_data = pd.DataFrame([{
             "Story": story,
@@ -75,20 +98,15 @@ if st.button("Submit Story"):
             "Values": ", ".join(values)
         }])
 
-        if os.path.exists(file_path):
-            new_data.to_csv(
-                file_path,
-                mode="a",
-                header=False,
-                index=False,
-                encoding="utf-8-sig"
-            )
-        else:
-            new_data.to_csv(
-                file_path,
-                index=False,
-                encoding="utf-8-sig"
-            )
+        old_data = pd.read_csv(FILE_NAME, encoding="utf-8-sig")
+
+        updated_data = pd.concat([old_data, new_data], ignore_index=True)
+
+        updated_data.to_csv(
+            FILE_NAME,
+            index=False,
+            encoding="utf-8-sig"
+        )
 
         st.success("Story saved successfully!")
 
@@ -98,23 +116,19 @@ if st.button("Submit Story"):
 # ----------------------------
 # DISPLAY DATA
 # ----------------------------
-st.write("## Stored Stories")
+df = pd.read_csv(FILE_NAME, encoding="utf-8-sig")
 
-if os.path.exists(file_path):
-    df = pd.read_csv(file_path, encoding="utf-8-sig")
-    st.dataframe(df)
-else:
-    st.info("No stories saved yet.")
+st.write("## Stored Stories")
+st.dataframe(df)
 
 # ----------------------------
 # DOWNLOAD BUTTON
 # ----------------------------
-if os.path.exists(file_path):
-    df = pd.read_csv(file_path, encoding="utf-8-sig")
+csv = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
 
-    st.download_button(
-        "Download CSV File",
-        data=df.to_csv(index=False),
-        file_name="heritage_data.csv",
-        mime="text/csv"
-    )
+st.download_button(
+    "Download CSV File",
+    data=csv,
+    file_name="heritage_data.csv",
+    mime="text/csv"
+)
